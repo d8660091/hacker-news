@@ -1,4 +1,4 @@
-(ns hacker-news.components
+uns hacker-news.components
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljsjs.moment]
             [cljs.core.async :as a :refer [<! >! chan close!]]
@@ -17,15 +17,18 @@
                           "comment--hide-kids")]}
           [:div {:class "comment-meta"}
            [:span {:class "comment-meta__by"}
-            (aget comment "by")]
+            (:by comment)]
            [:span {:class "comment-meta__time"}
             (.fromNow (js/moment (* (:time comment) 1000)))]]
           [:a {:class "comment-content"
                :on-click
-               (fn []
-                 (if (contains? (:hided-comment-ids @data) comment-id)
-                   (swap! data update-in [:hided-comment-ids] #(disj %1 comment-id))
-                   (swap! data update-in [:hided-comment-ids] #(conj %1 comment-id))))}
+               (fn [e]
+                 (when-not
+                     (and (= (.-tagName (.-target e)) "A")
+                          (not (.contains (.-classList (.-target e)) "comment-content")))
+                   (if (contains? (:hided-comment-ids @data) comment-id)
+                     (swap! data update-in [:hided-comment-ids] #(disj %1 comment-id))
+                     (swap! data update-in [:hided-comment-ids] #(conj %1 comment-id)))))}
            [:div {:dangerouslySetInnerHTML #js {:__html (:text comment)}}]]
           (when (:kids comment)
             [:div (comment-list (:kids comment) comments data)])
@@ -40,8 +43,12 @@
                      "story-item--show-comments")]}
      [:a {:class "story-item__title"
           :on-click (fn []
-                      (if-not (:focused-story-id @data)
+                      (if-not (= (:focused-story-id @data) (:id story))
                         (do
+                          (js/setTimeout #(.scrollIntoView
+                            (.querySelector
+                             js/document
+                             (str "[data-id='" (:id story) "']"))) 100)
                           (go
                             (let [tmp (atom {:comments {}})]
                               (<! (fire/get-comments (:id story) tmp))

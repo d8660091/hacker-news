@@ -27,7 +27,7 @@ body {
   margin: 0 0 10px 0;
   font-size: 1.2rem;
   cursor: pointer;
-  display: inline-block;
+  display: block;
 }
 
 .story-item__url a {
@@ -132,6 +132,7 @@ body {
   padding: 5px;
   background-color: #555;
   color: #eee;
+  cursor: pointer;
 }
 
 .load-more {
