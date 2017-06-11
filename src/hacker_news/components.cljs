@@ -6,31 +6,35 @@
             [sablono.core :as sab]))
 
 (defn comment-list [comment-ids comments data]
-  (sab/html [:div {:class "comment-list"}
-             (for [comment-id comment-ids]
-               (let [comment (get comments (keyword (str comment-id)))]
-                 (when comment
-                   (sab/html [:div {:key (.-id comment)
-                                    :class ["comment"
-                                            (if (and (contains? (:hided-comment-ids @data) comment-id)
-                                                     (.-kids comment))
-                                              "comment--hide-kids")]}
-                              [:div {:class "comment-meta"}
-                               [:span {:class "comment-meta__by"}
-                                (.-by comment)]
-                               [:span {:class "comment-meta__time"}
-                                (.fromNow (js/moment (* (.-time comment) 1000)))]]
-                              [:a {:on-click (fn []
-                                             (if (contains? (:hided-comment-ids @data) comment-id)
-                                               (swap! data update-in [:hided-comment-ids] #(disj %1 comment-id))
-                                               (swap! data update-in [:hided-comment-ids] #(conj %1 comment-id))))}
-                               [:div {:dangerouslySetInnerHTML #js {:__html (.-text comment)}}]]
-                              [:div (comment-list (js->clj (.-kids comment)) comments data)]
-                              ]))))]))
+  (sab/html
+   [:div {:class "comment-list"}
+    (for [comment-id comment-ids]
+      (let [comment (get comments (keyword (str comment-id)))]
+        (when comment
+          (sab/html
+           [:div {:key (.-id comment)
+                  :class ["comment"
+                          (if (and (contains? (:hided-comment-ids @data) comment-id)
+                                   (.-kids comment))
+                            "comment--hide-kids")]}
+            [:div {:class "comment-meta"}
+             [:span {:class "comment-meta__by"}
+              (.-by comment)]
+             [:span {:class "comment-meta__time"}
+              (.fromNow (js/moment (* (.-time comment) 1000)))]]
+            [:a {:on-click
+                 (fn []
+                   (if (contains? (:hided-comment-ids @data) comment-id)
+                     (swap! data update-in [:hided-comment-ids] #(disj %1 comment-id))
+                     (swap! data update-in [:hided-comment-ids] #(conj %1 comment-id))))}
+             [:div {:dangerouslySetInnerHTML #js {:__html (.-text comment)}}]]
+            [:div (comment-list (js->clj (.-kids comment)) comments data)]
+            ]))))]))
 
 (defn story [story comments data]
   (let [comment-ids (js->clj (.-kids story))]
     (sab/html [:div {:key (str (.-id story) (.getTime (js/Date.)))
+                     :data-id (.-id story)
                      :class ["story-item"
                              (when (= (.-id story) (:focused-story-id @data))
                                "story-item--show-comments")]}
@@ -44,6 +48,8 @@
                                          (swap! data assoc :comments (:comments @tmp))))
                                      (swap! data assoc :focused-story-id (.-id story)))
                                    (swap! data assoc :focused-story-id nil)))}
+                (+ 1 (first (fire/find-by-id (.-id story) (:stories @data))))
+                ". "
                 (.-title story)]
                [:div {:class "story-item__url"}
                 [:a {:href (.-url story)
@@ -59,11 +65,29 @@
                  )
                ])))
 
+(defn more [data]
+  (sab/html
+   [:button {:class "load-more"
+             :on-click (fn []
+                         (fire/sync-stories data))}
+    "More"]))
+
+(defn close [data]
+  (sab/html
+   [:a {:class "close-comment"
+        :on-click
+        (fn []
+          (let [query (str "[data-id='" (:focused-story-id @data) "']")]
+           (.scrollIntoView (.querySelector js/document query)))
+          (swap! data assoc :focused-story-id nil))}
+    "Close"]
+   ))
+
 (defn root [data]
-  (sab/html [:div
-             (if (:focused-story-id @data)
-               [:a {:class "close-comment"
-                    :on-click (fn [] (swap! data assoc :focused-story-id nil))}
-                "Close"])
-             [:div {:class "story-list"}
-              (for [story-obj (:stories @data)] (story story-obj (:comments @data) data))]]))
+  (sab/html
+   [:div
+    (if (:focused-story-id @data)
+      (close data))
+    [:div {:class "story-list"}
+     (for [story-obj (:stories @data)] (story story-obj (:comments @data) data))]
+    (more data)]))

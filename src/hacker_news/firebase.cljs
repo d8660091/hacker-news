@@ -48,3 +48,27 @@
   "get a story chan from a story id"
   (let [story-ref (get-ref (str "item/" story-id))]
     (get-data! story-ref)))
+
+(defn find-by-id [id js-list]
+  (keep-indexed
+   #(if (= (.-id %2) id) %1) js-list))
+
+(defn sync-stories [app-state]
+  (go
+    (let [stories-count (count (:stories @app-state))
+          story-ids (js->clj
+                     (<! (get-data!
+                          (.limitToFirst (get-ref "topstories")
+                                         (+ 30 stories-count)))))]
+      (doall
+       (for [story-id story-ids]
+         (when (empty? (find-by-id story-id (:stories @app-state)))
+             (let [story-chan (get-story! story-id)]
+            (go-loop []
+              (let [story (<! story-chan)
+                    stories (:stories @app-state)
+                    i (first (find-by-id (.-id story) stories))]
+                (if i (swap! app-state assoc-in [:stories i] story)
+                    (swap! app-state update-in [:stories]
+                           #(conj %1 story)))
+                (recur))))))))))

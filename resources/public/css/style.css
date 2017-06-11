@@ -118,3 +118,7 @@ body {
   background-color: #555;
   color: #eee;
 }
+
+.load-more {
+  margin: 0 10px 10px 15px;
+}
