@@ -29,14 +29,14 @@
     (do
       (.once item-ref "value"
              (fn [data-snapshot]
-               (let [comment (.val data-snapshot)
-                     comment-id (.-id comment)
+               (let [comment (js->clj (.val data-snapshot) :keywordize-keys true)
+                     comment-id (:id comment)
                      key (keyword (str comment-id))]
                  (when-not (get-in result [:comments key])
                    (swap! result assoc-in [:comments key] comment)
                    (go
                      (<! (a/map identity
-                                (let [kids (js->clj (.-kids comment))]
+                                (let [kids (js->clj (:kids comment))]
                                   (if kids
                                     (for [item-id-2 kids]
                                       (get-comments item-id-2 result))
@@ -49,9 +49,9 @@
   (let [story-ref (get-ref (str "item/" story-id))]
     (get-data! story-ref)))
 
-(defn find-by-id [id js-list]
+(defn index-by-id [id list]
   (keep-indexed
-   #(if (= (.-id %2) id) %1) js-list))
+   #(if (= (:id %2) id) %1) list))
 
 (defn sync-stories [app-state]
   (go
@@ -62,12 +62,12 @@
                                          (+ 30 stories-count)))))]
       (doall
        (for [story-id story-ids]
-         (when (empty? (find-by-id story-id (:stories @app-state)))
+         (when (empty? (index-by-id story-id (:stories @app-state)))
              (let [story-chan (get-story! story-id)]
             (go-loop []
-              (let [story (<! story-chan)
+              (let [story (js->clj (<! story-chan) :keywordize-keys true)
                     stories (:stories @app-state)
-                    i (first (find-by-id (.-id story) stories))]
+                    i (first (index-by-id (:id story) stories))]
                 (if i (swap! app-state assoc-in [:stories i] story)
                     (swap! app-state update-in [:stories]
                            #(conj %1 story)))

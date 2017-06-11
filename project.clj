@@ -18,9 +18,9 @@
                                    :output-dir "resources/public/cljs/out"}}
                        {:id "min"
                         :source-paths ["src"]
-                        :compiler {:main "hacker-news.core"
-                                   :output-to "resources/public/cljs/main.js"
-                                   :optimizations :advanced}}]}
+                        :compiler {:output-to "resources/public/cljs/main.js"
+                                   :optimizations :advanced
+                                   :pretty-print true }}]}
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
                                   [figwheel-sidecar "0.5.8"]]
                    :plugins [[cider/cider-nrepl "0.15.0-SNAPSHOT"]]
