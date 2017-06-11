@@ -3,6 +3,6 @@ A hacker news front end
 
 # Features
  - Realtime update
- - Mouse unfriendly
+ - Designed for keyboard
  
 https://hacker-news-7811c.firebaseapp.com/
