@@ -1,4 +1,4 @@
-uns hacker-news.components
+(ns hacker-news.components
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljsjs.moment]
             [cljs.core.async :as a :refer [<! >! chan close!]]
