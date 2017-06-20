@@ -1,9 +1,14 @@
 (ns hacker-news.components
   (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:require [cljsjs.moment]
+            [cljsjs.react-transition-group]
             [cljs.core.async :as a :refer [<! >! chan close!]]
             [hacker-news.firebase :as fire]
             [sablono.core :as sab]))
+
+(defn loading []
+  [:img {:class "loading"
+         :src "images/loader.svg"}])
 
 (defn comment-list [comment-ids comments data]
   [:div {:class "comment-list"}
@@ -29,7 +34,7 @@
                    (if (contains? (:hided-comment-ids @data) comment-id)
                      (swap! data update-in [:hided-comment-ids] #(disj %1 comment-id))
                      (swap! data update-in [:hided-comment-ids] #(conj %1 comment-id)))))}
-           [:div {:dangerouslySetInnerHTML #js {:__html (:text comment)}}]]
+           [:div {:dangerouslySetInnerHTML #js {:__html (or (:text comment) "[deleted]")}}]]
           (when (:kids comment)
             [:div (comment-list (:kids comment) comments data)])
           ])))])
@@ -55,8 +60,9 @@
                               (swap! data assoc :comments (:comments @tmp))))
                           (swap! data assoc :focused-story-id (:id story)))
                         (swap! data assoc :focused-story-id nil)))}
-      (+ 1 (first (fire/index-by-id (:id story) (:stories @data))))
-      ". "
+      [:span {:class "story-item__number"}
+       (+ 1 (first (fire/index-by-id (:id story) (:stories @data))))
+       ". "]
       (:title story)]
      [:div {:class "story-item__url"}
       [:a {:href (:url story)
@@ -64,12 +70,11 @@
        (:url story)]]
      [:div {:class "story-meta"}
       [:div {:class "story-meta__comment-count"}
-       (:descendants story) " comments"]
+       (or (:descendants story) "0") " comments"]
       [:div {:class "story-meta__score"}
        (:score story) " points"]]
      (when (= (:id story) (:focused-story-id @data))
-       (comment-list comment-ids comments data))]
-    ))
+       (comment-list comment-ids comments data))]))
 
 (defn more [data]
   [:button {:class "load-more"
@@ -84,14 +89,17 @@
          (let [query (str "[data-id='" (:focused-story-id @data) "']")]
            (.scrollIntoView (.querySelector js/document query)))
          (swap! data assoc :focused-story-id nil))}
-   "Close"]
-  )
+   "Close"])
 
 (defn root [data]
   (sab/html
    [:div
+    (when (empty? (:stories @data))
+      (loading))
     (if (:focused-story-id @data)
       (close data))
     [:div {:class "story-list"}
-     (for [story-obj (:stories @data)] (story story-obj (:comments @data) data))]
-    (more data)]))
+     [:css-trans-group {:transition-name "fade"
+                        :transitionEnterTimeout 5000}
+      (for [story-obj (:stories @data)] (story story-obj (:comments @data) data))]]
+    (when-not (empty? (:stories @data)) (more data))]))

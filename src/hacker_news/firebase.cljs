@@ -63,12 +63,12 @@
       (doall
        (for [story-id story-ids]
          (when (empty? (index-by-id story-id (:stories @app-state)))
-             (let [story-chan (get-story! story-id)]
-            (go-loop []
-              (let [story (js->clj (<! story-chan) :keywordize-keys true)
-                    stories (:stories @app-state)
-                    i (first (index-by-id (:id story) stories))]
-                (if i (swap! app-state assoc-in [:stories i] story)
-                    (swap! app-state update-in [:stories]
-                           #(conj %1 story)))
-                (recur))))))))))
+           (let [story-chan (get-story! story-id)]
+             (go-loop []
+               (let [story (js->clj (<! story-chan) :keywordize-keys true)
+                     stories (:stories @app-state)
+                     i (first (index-by-id (:id story) stories))]
+                 (if i (swap! app-state assoc-in [:stories i] story)
+                     (swap! app-state update-in [:stories]
+                            #(conj %1 story)))
+                 (recur))))))))))
