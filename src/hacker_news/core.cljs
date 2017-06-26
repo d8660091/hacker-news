@@ -3,22 +3,29 @@
   (:require [cljsjs.firebase]
             [cljs.core.async :refer [<! >! chan close!]]
             [cljs.core.async.impl.timers :as timers :refer [timeout]]
+            [reagent.core :as r]
             [hacker-news.firebase :as fire]
             [hacker-news.components :refer [root]]))
 
 (enable-console-print!)
 
-(defonce app-state (atom {:stories []
-                          :comments {}
-                          :focused-story-id nil
-                          :hided-comment-ids #{}}))
+(defn get-viewed-story-ids []
+  (take-last 30 (set (js->clj (js/JSON.parse (js/localStorage.getItem "viewed-story-ids"))))))
+
+(defonce app-state (r/atom {:stories []
+                            :comments {}
+                            :focused-story-id nil
+                            :viewed-story-ids (get-viewed-story-ids)
+                            :hided-comment-ids #{}}))
+
+(add-watch app-state :saveViewed
+           (fn [key atom _ new-state]
+             (js/localStorage.setItem "viewed-story-ids"
+                                      (js/JSON.stringify (clj->js (:viewed-story-ids new-state))))))
 
 (defn render! []
-  (.render js/ReactDOM
-           (root app-state)
+  (r/render [root app-state]
            (.getElementById js/document "app")))
-
-(add-watch app-state :on-change (fn [_ _ _ _] (render!)))
 
 (render!)
 
