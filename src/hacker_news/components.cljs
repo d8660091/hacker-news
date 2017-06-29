@@ -69,9 +69,6 @@
                               (swap! data assoc :comments (:comments @tmp))))
                           (swap! data assoc :focused-story-id (:id story)))
                         (swap! data assoc :focused-story-id nil)))}
-      [:span {:class "story-item__number"}
-       (+ 1 (first (fire/index-by-id (:id story) (:stories @data))))
-       ". "]
       (:title story)]
      [:div {:class "story-item__url"}
       [:a {:href (:url story)
