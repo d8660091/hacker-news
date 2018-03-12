@@ -3,4 +3,4 @@ A hacker news front end
 
 # Features
  - Realtime update
- - Designed for keyboard
+ - Works well with Vimium
