@@ -80,6 +80,13 @@
       [:div {:class "story-meta__score"}
        (:score story) " points"]]
      (when (= (:id story) (:focused-story-id @data))
+       (if (:text story)
+         [:div {:style {:margin-top "15px"}}
+          [:strong {:style {:margin-right "5px"}} (:by story)]
+          [:span (.fromNow (js/moment (* (:time story) 1000)))]
+          [:div {:style {:margin-top "15px"} :dangerouslySetInnerHTML {:__html (:text story)}}]]
+         ))
+     (when (= (:id story) (:focused-story-id @data))
        (if (contains? comments (keyword (str (first comment-ids))))
          (comment-list comment-ids comments data)
          (when (not (empty? comment-ids))

@@ -19,8 +19,7 @@
                        {:id "min"
                         :source-paths ["src"]
                         :compiler {:output-to "resources/public/cljs/main.js"
-                                   :optimizations :advanced
-                                   :pretty-print true }}]}
+                                   :optimizations :advanced}}]}
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
                                   [figwheel-sidecar "0.5.8"]]
                    :plugins [[cider/cider-nrepl "0.15.0-SNAPSHOT"]]
